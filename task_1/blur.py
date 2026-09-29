@@ -1,12 +1,50 @@
 import numpy as np
 
-#def pad_image(...)
-    #return ...
+def pad_image(image: np.ndarray, pad: int, mode: str) -> np.ndarray:
+    if mode == "zero":
+        return np.pad(
+            image,
+            ((pad, pad), (pad, pad)),
+            mode="constant",
+            constant_values=0,
+        )
 
-#def box_blur(...)
-    #return ...
+    if mode == "edge":
+        return np.pad(
+            image,
+            ((pad, pad), (pad, pad)),
+            mode="edge",
+        )
 
-def make_test_image(size: int = 40) -> Image:
+    raise ValueError(f"Unknown padding mode: {mode}")
+
+
+def box_blur(
+    image: np.ndarray,
+    kernel_size: int,
+    mode: str,
+) -> np.ndarray:
+    if kernel_size <= 0 or kernel_size % 2 == 0:
+        raise ValueError("kernel_size must be a positive odd integer")
+
+    pad = kernel_size // 2
+    padded = pad_image(image, pad, mode)
+
+    result = np.empty(image.shape, dtype=float)
+
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            window = padded[
+                i:i + kernel_size,
+                j:j + kernel_size,
+            ]
+
+            result[i, j] = np.mean(window)
+
+    return result
+
+
+def make_test_image(size: int = 40) -> np.ndarray:
     import random
     random.seed(0)
     img = np.zeros((size, size))
@@ -25,7 +63,7 @@ def main():
  
     image = make_test_image(size=40)
  
-    blurred_k3 = box_blur(image, kernel_size=9, mode="edge")
+    blurred_k3 = box_blur(image, kernel_size=3, mode="edge")
     blurred_k9 = box_blur(image, kernel_size=9, mode="zero")
  
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
